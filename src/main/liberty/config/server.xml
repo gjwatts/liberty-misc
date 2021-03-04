@@ -1,5 +1,4 @@
 <server>
-
     <featureManager>
         <feature>servlet-4.0</feature>
         <feature>jaxrs-2.1</feature>
@@ -8,8 +7,6 @@
     </featureManager>
     
     <keyStore password="changeit"/>
-    
-<!--     <httpEndpoint id="defaultHttpEndpoint" httpPort="${httpPort}" httpsPort="${httpsPort}" /> -->
     
     <library id="derbyLib">
         <fileset dir="${shared.resource.dir}/derby"/>

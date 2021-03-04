@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020 IBM Corporation and others.
+ * Copyright (c) 2021 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -73,6 +73,23 @@ public class TestService {
 
         log("Text block literal is:");
         log(query);
+
+        // Java 16 specific test - Pattern matching for instanceof (JEPS 394) -> https://openjdk.java.net/jeps/394
+        Object obj = "Basketballs bounce busily";
+
+        if (obj instanceof String s) {
+            log(s);
+            assertEquals("Basketballs bounce busily", s);
+        } else {
+            throw new Exception("instanceof test failed");
+        }
+
+        // Java 16 specific test - Records (JEPS 395) -> https://openjdk.java.net/jeps/395
+        result = RecordTest.test();
+        log(result);
+        assertEquals("Minnesota has a population of 5640000, was founded in 1858 and the capital is St. Paul.  The best city is Rochester.", result);
+
+        log("Goodbye world");
     }
 
     public static enum DAY {

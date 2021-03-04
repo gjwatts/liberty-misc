@@ -1,12 +1,12 @@
+// To create this war file (ex: ./gradlew build) for newer versions of Java (typically early access ones) before gradle supports it
+// See the README.md file
+
 apply plugin: 'war'
 apply plugin: 'liberty'
 
 group = 'org.gjwatts'
-version = '1.15-SNAPSHOT'
+version = '1.16-SNAPSHOT'
 description = "Basic Liberty repo"
-
-sourceCompatibility = 15
-targetCompatibility = 15
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
@@ -16,11 +16,26 @@ compileJava {
     //inputs.property("moduleName", moduleName)
     doFirst {
         options.compilerArgs = [
+            '--add-modules=jdk.incubator.foreign',
             '--module-path', classpath.asPath,
             '--enable-preview'
         ]
-        classpath = files()  
+        classpath = files()
+        options.warnings = true
+        options.deprecation = true
+        options.debug = true
+        options.incremental = false
     }
+}
+test {
+  useJUnitPlatform()
+  jvmArgs '--add-modules=jdk.incubator.foreign'
+}
+
+java {
+  toolchain {
+    languageVersion = JavaLanguageVersion.of(16)
+  }
 }
 
 buildscript {
@@ -41,20 +56,18 @@ configurations {
 }
 
 dependencies {
-	//compileOnly 'org.apache.derby:derby:10.14.1.0'
     compileOnly group: 'javax.ws.rs', name: 'javax.ws.rs-api', version: '2.1.1'
     compileOnly group: 'javax.persistence', name: 'javax.persistence-api', version: '2.2'
     compileOnly group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.1'
     compileOnly group: 'javax.enterprise', name: 'cdi-api', version: '2.0'
     compileOnly group: 'javax.annotation', name: 'javax.annotation-api', version: '1.3.2'
     compileOnly group: 'javax.transaction', name: 'javax.transaction-api', version: '1.3'
-	//compileOnly 'javax:javaee-api:8.0'
-    libertyRuntime group: 'io.openliberty', name: 'openliberty-runtime', version: '20.0.0.8'
     serverLibs group: 'org.apache.derby', name: 'derby', version: '10.14.2.0' // '10.15.1.3'
+    libertyRuntime group: 'io.openliberty', name: 'openliberty-runtime', version: '21.0.0.2'
 }
 
 ext {
-	appUrl = 'http://localhost:9080/java15-app/'
+	appUrl = 'http://localhost:9080/java16-app/'
 }
 
 liberty {

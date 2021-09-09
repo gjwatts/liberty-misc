@@ -12,32 +12,20 @@ package org.gjwatts.liberty;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Objects;
+import java.util.Iterator;
+import java.util.random.RandomGenerator;
+import java.util.random.RandomGeneratorFactory;
+import java.util.stream.IntStream;
 
-import javax.annotation.Resource;
 import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.transaction.UserTransaction;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-
-import org.gjwatts.liberty.Child;
-import org.gjwatts.liberty.SealedClassTest;
 
 @Path("/")
 @ApplicationScoped
 public class TestService {
 
-    @Resource
-    UserTransaction tx;
-
-    @PersistenceContext(unitName = "JPAPU")
-    private EntityManager em;
-
-    @Inject
-    SampleBean bean;
+    private StringWriter sw = new StringWriter();
 
     @GET
     public String test() {
@@ -47,100 +35,75 @@ public class TestService {
             log("<<< EXIT SUCCESSFUL");
         } catch (Exception e) {
             e.printStackTrace(System.out);
-            e.printStackTrace(new PrintWriter(sb));
+            e.printStackTrace(new PrintWriter(sw));
             log("<<< EXIT FAILED");
         }
-        String result = sb.toString();
-        sb = new StringWriter();
+        String result = sw.toString();
+        sw = new StringWriter();
         return result;
     }
 
     private void doTest() throws Exception {
-        log("Hello world");
+        log("Begining Java 17 testing");
 
-        assertEquals("Hello world!", bean.sayHello());
+        SwitchPatternMatching(RandomPick());
 
-        testJPA();
-        testSwitchExpressions();
+        log("Goodbye testing");
+    }
 
-        String result = EdDSATest.test();
-        log(result);
-        assertEquals("Successfully created an EdDSA KeyFactory", result);
-
-        result = SealedClassTest.test();
-        log(result);
-        assertEquals("Hello from the child", result);
-
-        log("Text block literal is:");
-        log(query);
-
-        // Java 16 specific test - Pattern matching for instanceof (JEPS 394) -> https://openjdk.java.net/jeps/394
-        Object obj = "Basketballs bounce busily";
-
-        if (obj instanceof String s) {
-            log(s);
-            assertEquals("Basketballs bounce busily", s);
+    // JEP 356: Enhanced Pseudo-Random Number Generators - https://openjdk.java.net/jeps/356
+    public Object RandomPick() {
+        RandomGeneratorFactory<RandomGenerator> rgf = RandomGeneratorFactory.of("L64X128MixRandom");
+        RandomGenerator rng = rgf.create();
+        int rnd = rng.nextInt(6);
+        if (rnd == 0) {
+            return RandomString(rng);
+        } else if (rnd == 1) {
+            return rng.nextInt();
+        } else if (rnd == 2) {
+            return rng.nextLong();
+        } else if (rnd == 3) {
+            return rng.nextFloat();
+        } else if (rnd == 4) {
+            return rng.nextDouble();
         } else {
-            throw new Exception("instanceof test failed");
+            return rng.nextBoolean();
+        }
+    }
+
+    public String RandomString(RandomGenerator rng) {
+        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz";
+        int len = rng.nextInt(35) + 5;
+        IntStream picks = rng.ints(len, 0, characters.length());
+        StringBuilder sb = new StringBuilder("(" + len + ") ");
+
+        Iterator<Integer> it = picks.iterator();
+
+        while (it.hasNext()) {
+            sb.append(characters.charAt(it.next()));
         }
 
-        // Java 16 specific test - Records (JEPS 395) -> https://openjdk.java.net/jeps/395
-        result = RecordTest.test();
-        log(result);
-        assertEquals("Minnesota has a population of 5640000, was founded in 1858 and the capital is St. Paul.  The best city is Rochester.", result);
-
-        log("Goodbye world");
+        return sb.toString();
     }
 
-    public static enum DAY {
-        MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY
-    }
-
-    private void testSwitchExpressions() {
-        DAY day = DAY.valueOf("MONDAY");
-        switch (day) {
-            case MONDAY, FRIDAY, SUNDAY -> log("Case A");
-            case TUESDAY -> log("Case B");
-            case THURSDAY, SATURDAY -> log("Case C");
-            case WEDNESDAY -> log("Case D");
+    // JEP 406: Pattern Matching for switch (Preview) - https://openjdk.java.net/jeps/406
+    public void SwitchPatternMatching(Object o) {
+        switch (o) {
+            case null         -> log("Random value was null");
+            case Integer i    -> log("Random value was an integer: " + i);
+            case Long l       -> log("Random value was a long: " + l);
+            case Float f      -> log("Random value was a float: " + f);
+            case Double d     -> log("Random value was a double: " + d);
+            case Boolean b    -> log("Random value was a boolean: " + b);
+            case String s     -> log("Random value was a String: " + s);
+            default           -> log("Forgot to check for this type: " + o.getClass().toString());
         }
-        log("testSwitchExpressions COMPLETE");
     }
 
-    String query = """
-                   SELECT `EMP_ID`, `LAST_NAME` FROM `EMPLOYEE_TB`
-                   WHERE `CITY` = 'INDIANAPOLIS'
-    ORDER BY`EMP_ID`,`LAST_NAME`;""";
-
-    private StringWriter sb = new StringWriter();
-
-    private void log(String msg) {
+    public void log(String msg) {
         System.out.println(msg);
-        sb.append(msg);
-        sb.append("<br/>");
-    }
-
-    public void testJPA() throws Exception {
-        tx.begin();
-        Book b = new Book();
-        b.author = "Bob";
-        b.id = 1;
-        b.pages = 100;
-        b.title = "The Joy of Painting";
-        em.persist(b);
-        tx.commit();
-
-        em.clear();
-        Book findEntity = em.find(Book.class, b.id);
-        if (b == findEntity)
-            throw new RuntimeException("Instance found from EntityManger should not be same instance that was persisted");
-        assertEquals(b.id, findEntity.id);
-        assertEquals(b.title, findEntity.title);
-    }
-
-    private static void assertEquals(Object expected, Object actual) {
-        if (!Objects.equals(expected, actual))
-            throw new RuntimeException("Expected <" + expected + "> but instead got <" + actual + ">");
+        sw.append(msg);
+        sw.append("<br/>");
     }
 
 }

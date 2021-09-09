@@ -1,20 +1,6 @@
 <server>
     <featureManager>
-        <feature>servlet-4.0</feature>
+		<feature>servlet-4.0</feature>
         <feature>jaxrs-2.1</feature>
-        <feature>cdi-2.0</feature>
-        <feature>jpa-2.2</feature>
     </featureManager>
-    
-    <keyStore password="changeit"/>
-    
-    <library id="derbyLib">
-        <fileset dir="${shared.resource.dir}/derby"/>
-    </library>
-
-    <dataSource id="DefaultDataSource">
-        <jdbcDriver libraryRef="derbyLib"/>
-        <properties.derby.embedded createDatabase="create" databaseName="memory:derbyDB"/>
-    </dataSource>
-
 </server>
